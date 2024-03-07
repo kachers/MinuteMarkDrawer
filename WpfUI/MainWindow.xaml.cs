@@ -1,17 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using Microsoft.Win32;
+using IO = System.IO;
+
 
 namespace WpfUI
 {
@@ -20,6 +12,7 @@ namespace WpfUI
     /// </summary>
     public partial class MainWindow : Window
     {
+        readonly StartClock _startClock = new StartClock();
         public MainWindow()
         {
             InitializeComponent();
@@ -27,7 +20,41 @@ namespace WpfUI
 
         private void SelectButton_OnClick(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            var openFileDialog = new OpenFileDialog
+            {
+                Title = "Select a Folder",
+                CheckFileExists = false,
+                CheckPathExists = true,
+                FileName = "Folder Selection",
+                Filter = "Folders|\n",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                RestoreDirectory = true,
+                ValidateNames = false
+            };
+
+            var response = openFileDialog.ShowDialog();
+
+            if (response == true)
+            {
+                string folderPath = IO.Path.GetDirectoryName(openFileDialog.FileName);
+                MessageBox.Show($"Selected Folder: {folderPath}");
+                FolderPath.Text = folderPath;
+            }
+        }
+
+        private async void StartButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            ClockStart.Text = "CLOCK STARTED";
+            var folderPath = FolderPath.Text;
+
+            // Run GeneratePNG on a separate thread
+            await Task.Run(() => _startClock.GeneratePng(folderPath));
+        }
+
+        private void StopButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            _startClock.StopGeneratePng();
+            ClockStart.Text = "CLOCK STOPPED";
         }
     }
 }
